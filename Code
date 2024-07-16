@@ -1,0 +1,142 @@
+from tkinter import Tk, Label, StringVar, Button, Frame
+from tkinter import ttk
+import requests
+
+# Map weather conditions to background colors
+weather_colors = {
+    "Thunderstorm": "royalblue",
+    "Drizzle": "deepskyblue",
+    "Rain": "darkblue",
+    "Snow": "lightblue",
+    "Clear": "skyblue",
+    "Clouds": "deepbluesea",
+    "Mist": "lightgrey",
+    "Smoke": "grey",
+    "Haze": "lightgrey",
+    "Dust": "goldenrod",
+    "Fog": "lightgrey",
+    "Sand": "goldenrod",
+    "Ash": "darkgrey",
+    "Squall": "darkblue",
+    "Tornado": "darkslategray"
+}
+
+
+def data_get():
+    city = city_name.get()
+    try:
+        response = requests.get(
+            f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid=eec80e06cb508243ae2eaaffd32b648b"
+        )
+        response.raise_for_status()  # Check if the request was successful
+        data = response.json()
+
+        weather_main = data["weather"][0]["main"]
+        weather_description = data["weather"][0]["description"]
+        temperature = data['main']['temp'] - 273.15
+        pressure = data['main']['pressure']
+
+        w_label1.config(text=weather_main)
+        wb_label1.config(text=weather_description)
+        temp_label1.config(text=f"{temperature:.2f} °C")
+        per_label1.config(text=f"{pressure} hPa")
+
+        # Update background color based on weather condition
+        new_bg_color = weather_colors.get(weather_main, "#8C52FF")  # Default to original background color if not found
+        win.config(bg=new_bg_color)
+        header_frame.config(bg=new_bg_color)
+        combo_frame.config(bg=new_bg_color)
+        button_frame.config(bg=new_bg_color)
+        results_frame.config(bg=new_bg_color)
+        safety_label.config(bg=new_bg_color)
+
+        safety_message = get_safety_message(weather_main, temperature)
+        safety_label.config(text=safety_message)
+    except requests.exceptions.RequestException as e:
+        w_label1.config(text="Error")
+        wb_label1.config(text="")
+        temp_label1.config(text="")
+        per_label1.config(text="")
+        safety_label.config(text="")
+        print(f"Error: {e}")
+
+
+def get_safety_message(weather_main, temperature):
+    if weather_main in ["Thunderstorm", "Snow", "Rain"]:
+        return "It's better to stay indoors due to severe weather."
+    elif weather_main in ["Clear", "Clouds"] and 20 <= temperature <= 30:
+        return "The weather is nice. It's safe to go out."
+    elif temperature > 35:
+        return "It's quite hot outside. Stay hydrated if you go out."
+    elif temperature < 5:
+        return "It's very cold outside. Dress warmly if you go out."
+    else:
+        return "Be cautious if you decide to go out."
+
+
+# Create the main window
+win = Tk()
+win.title("OM's Work")
+win.config(bg="#8C52FF")
+win.geometry("500x600")
+
+# Header frame
+header_frame = Frame(win, bg="#8C52FF")
+header_frame.pack(pady=20)
+
+name_label = Label(header_frame, text="LookUp", font=("Segoe UI", 30, "bold"), bg="#8C52FF", fg="white")
+name_label.pack()
+
+# Combobox frame
+combo_frame = Frame(win, bg="#8C52FF")
+combo_frame.pack(pady=20)
+
+city_name = StringVar()
+list_name = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
+    "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+    "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands",
+    "Chandigarh", "Dadra and Nagar Haveli", "Daman and Diu", "Lakshadweep", "National Capital Territory of Delhi",
+    "Pondicherry"
+]
+
+com = ttk.Combobox(combo_frame, values=list_name, font=("Segoe UI", 20, "bold"), textvariable=city_name)
+com.pack(pady=10, padx=20)
+
+# Button frame
+button_frame = Frame(win, bg="#8C52FF")
+button_frame.pack(pady=10)
+
+done_button = Button(button_frame, text="Search", font=("Segoe UI", 20, "bold"), command=data_get, bg="#debff4",
+                     fg="white", activebackground="#8b48d7", activeforeground="white")
+done_button.pack(pady=10)
+
+# Results frame
+results_frame = Frame(win, bg="#8C52FF")
+results_frame.pack(pady=20)
+
+w_label = Label(results_frame, text="Weather Climate:", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+w_label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
+w_label1 = Label(results_frame, text="", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+w_label1.grid(row=0, column=1, padx=20, pady=10, sticky="w")
+
+wb_label = Label(results_frame, text="Weather Description:", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+wb_label.grid(row=1, column=0, padx=20, pady=10, sticky="w")
+wb_label1 = Label(results_frame, text="", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+wb_label1.grid(row=1, column=1, padx=20, pady=10, sticky="w")
+
+temp_label = Label(results_frame, text="Temperature:", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+temp_label.grid(row=2, column=0, padx=20, pady=10, sticky="w")
+temp_label1 = Label(results_frame, text="", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+temp_label1.grid(row=2, column=1, padx=20, pady=10, sticky="w")
+
+per_label = Label(results_frame, text="Pressure:", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+per_label.grid(row=3, column=0, padx=20, pady=10, sticky="w")
+per_label1 = Label(results_frame, text="", font=("Segoe UI", 17), bg="#8C52FF", fg="white")
+per_label1.grid(row=3, column=1, padx=20, pady=10, sticky="w")
+
+safety_label = Label(win, text="", font=("Segoe UI", 17), bg="#8C52FF", fg="white", wraplength=400)
+safety_label.pack(pady=20)
+
+win.mainloop()
